@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+  title: STD24120
+  version: "1.0.0"
+  description: "This is a specification of STD24120"
+servers:
+  - url: http://localhost:8000
+paths:
+  /booking:
+    get:
+      summary: Lister les réservations
+      operationId: listBookings
+      responses:
+        "200":
+          description: Liste des réservations en mémoire
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+    post:
+      summary: Créer des réservations (liste)
+      operationId: createBookings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/BookingCreate"
+      responses:
+        "200":
+          description: Liste totale des réservations après création
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+        "400":
+          description: Requête invalide
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflit — chambre déjà réservée pour cette date
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    # On regroupe et on évite la redondance via allOf (BONUS)
+    Customer:
+      type: object
+      required: [name, phone, email]
+      properties:
+        name:
+          type: string
+          description: Nom du client
+        phone:
+          type: string
+          description: Téléphone du client
+        email:
+          type: string
+          format: email
+          description: Adresse email du client
+    Room:
+      type: object
+      required: [roomNumber]
+      properties:
+        roomNumber:
+          type: integer
+          minimum: 1
+          maximum: 9
+          description: Numéro de chambre (1 à 9 uniquement)
+        roomName:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+    BookingBase:
+      allOf:
+        - $ref: "#/components/schemas/Customer"
+        - $ref: "#/components/schemas/Room"
+        - type: object
+          required: [bookingDate]
+          properties:
+            bookingDate:
+              type: string
+              format: date
+              description: Date de réservation (YYYY-MM-DD)
+    BookingCreate:
+      allOf:
+        - $ref: "#/components/schemas/BookingBase"
+    Booking:
+      allOf:
+        - $ref: "#/components/schemas/BookingBase"
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: integer
+              description: Identifiant interne
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
